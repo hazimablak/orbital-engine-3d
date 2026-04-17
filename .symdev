@@ -1,17 +1,17 @@
 {
-  "project_id" : 1757,
-  "project_name" : "2D Transformation Editor",
+  "project_id" : 1797,
+  "project_name" : "orbital-engine-3d",
   "language" : "JAVA",
-  "ai_chat_id" : "15SYSbessPJt6usApQ_J2ewKqPFGpPNKa",
+  "ai_chat_id" : "17QApi4hYr9jcaxt5_zCuzyL6po-rdDPx",
   "active_llm_provider" : "gemini",
   "ai_chat_sessions" : {
-    "gemini" : "15SYSbessPJt6usApQ_J2ewKqPFGpPNKa"
+    "gemini" : "17QApi4hYr9jcaxt5_zCuzyL6po-rdDPx"
   },
-  "last_opened" : 1776411269449,
+  "last_opened" : 1776414557563,
   "symdev_account_email" : null,
   "llm_account_email" : "ablakhazim1071@gmail.com",
-  "github_repo_url" : null,
+  "github_repo_url" : "https://github.com/hazimablak/orbital-engine-3d.git",
   "build_command" : "mvn clean package",
-  "run_command" : "java -jar target/orbital-sandbox-v6-6.0-RELEASE.jar",
+  "run_command" : "mvn exec:java",
   "open_browser_url" : null
 }
