@@ -152,19 +152,23 @@ public class OrbitalSandbox extends PApplet {
     }
 
     private void undo() {
-        if (undoStack.isEmpty()) return;
-        String name = (selectedNode != null) ? selectedNode.name : "";
-        redoStack.addFirst(gson.toJson(sun));
-        sun = gson.fromJson(undoStack.removeFirst(), TransformNode.class);
-        selectedNode = (!name.equals("")) ? findNodeByName(sun, name) : sun;
+        try {
+            if (undoStack.isEmpty()) return;
+            String name = (selectedNode != null) ? selectedNode.name : "";
+            redoStack.addFirst(gson.toJson(sun));
+            sun = gson.fromJson(undoStack.removeFirst(), TransformNode.class);
+            selectedNode = (!name.equals("")) ? findNodeByName(sun, name) : sun;
+        } catch (Exception e) { System.err.println("Undo failed"); }
     }
 
     private void redo() {
-        if (redoStack.isEmpty()) return;
-        String name = (selectedNode != null) ? selectedNode.name : "";
-        undoStack.addFirst(gson.toJson(sun));
-        sun = gson.fromJson(redoStack.removeFirst(), TransformNode.class);
-        selectedNode = (!name.equals("")) ? findNodeByName(sun, name) : sun;
+        try {
+            if (redoStack.isEmpty()) return;
+            String name = (selectedNode != null) ? selectedNode.name : "";
+            undoStack.addFirst(gson.toJson(sun));
+            sun = gson.fromJson(redoStack.removeFirst(), TransformNode.class);
+            selectedNode = (!name.equals("")) ? findNodeByName(sun, name) : sun;
+        } catch (Exception e) { System.err.println("Redo failed"); }
     }
 
     private TransformNode findNodeByName(TransformNode root, String name) {
@@ -179,11 +183,17 @@ public class OrbitalSandbox extends PApplet {
     }
 
     private void loadScene() {
-        String[] lines = loadStrings("orbital_scene.json");
-        if (lines != null && lines.length > 0) {
-            sun = gson.fromJson(lines[0], TransformNode.class);
-            selectedNode = sun;
-            System.out.println("Scene Loaded.");
+        try {
+            String[] lines = loadStrings("orbital_scene.json");
+            if (lines != null && lines.length > 0 && lines[0].trim().length() > 5) {
+                sun = gson.fromJson(lines[0], TransformNode.class);
+                selectedNode = sun;
+                System.out.println("Scene Loaded.");
+            } else {
+                System.out.println("Load skipped: File empty or invalid.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading scene: " + e.getMessage());
         }
     }
 

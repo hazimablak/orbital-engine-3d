@@ -1,16 +1,16 @@
 {
-  "project_id" : 1797,
+  "project_id" : 1802,
   "project_name" : "orbital-engine-3d",
   "language" : "JAVA",
-  "ai_chat_id" : "17QApi4hYr9jcaxt5_zCuzyL6po-rdDPx",
+  "ai_chat_id" : "1nhRpgaSVDrPGtmaGi1UjRozi58iA_xvo",
   "active_llm_provider" : "gemini",
   "ai_chat_sessions" : {
-    "gemini" : "17QApi4hYr9jcaxt5_zCuzyL6po-rdDPx"
+    "gemini" : "1nhRpgaSVDrPGtmaGi1UjRozi58iA_xvo"
   },
-  "last_opened" : 1776433305544,
+  "last_opened" : 1776435928645,
   "symdev_account_email" : null,
   "llm_account_email" : "ablakhazim1071@gmail.com",
-  "github_repo_url" : "https://github.com/hazimablak/orbital-engine-3d.git",
+  "github_repo_url" : "https://github.com/hazimablak/orbital-engine-3d",
   "build_command" : "mvn clean package",
   "run_command" : "mvn exec:java",
   "open_browser_url" : null
