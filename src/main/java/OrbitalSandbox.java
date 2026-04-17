@@ -10,7 +10,7 @@ public class OrbitalSandbox extends PApplet {
     public TransformNode selectedNode = null;
     private float simulationSpeed = 1.0f;
     private boolean globalPaused = false;
-    public float globalTime = 0;
+    private float globalTime = 0;
     private Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().create();
     
     private boolean[] keys = new boolean[1024];
@@ -66,7 +66,6 @@ public class OrbitalSandbox extends PApplet {
         rotX = radians(-20); rotY = 0;
         simulationSpeed = 1.0f;
         globalPaused = false;
-        
         sun = new TransformNode("GÜNEŞ", 0, 0, 0, color(255, 210, 0), 180);
         sun.description = "Yüzey Sıcaklığı: ~5.500°C\nKütlesi: Sistemin %99.8'i\nDiameter: 1.392.000 km";
         sun.isEmissive = true;
@@ -76,7 +75,7 @@ public class OrbitalSandbox extends PApplet {
         TransformNode venus = new TransformNode("VENÜS", 550, 0, 0, color(240, 200, 120), 65);
         venus.rotationSpeed = 0.003f; sun.addChild(venus);
         TransformNode earth = new TransformNode("DÜNYA", 800, 0, 0, color(0, 100, 255), 75);
-        earth.rotationSpeed = 0.012f; sun.addChild(earth);
+        earth.axialTilt = radians(23.5f); earth.rotationSpeed = 0.012f; sun.addChild(earth);
         TransformNode moon = new TransformNode("AY", 180, 0, 0, color(220), 22);
         moon.isTidallyLocked = true; earth.addChild(moon);
         TransformNode mars = new TransformNode("MARS", 1100, 0, 0, color(255, 100, 50), 50);
@@ -85,8 +84,7 @@ public class OrbitalSandbox extends PApplet {
         for (int i = 0; i < 150; i++) {
             float angle = random(TWO_PI), d = random(1300, 1450);
             TransformNode ast = new TransformNode("AST_"+i, cos(angle)*d, random(-20,20), sin(angle)*d, color(120), random(3, 6));
-            ast.orbitAngle = angle;
-            sun.addChild(ast);
+            ast.orbitAngle = angle; sun.addChild(ast);
         }
         selectedNode = sun;
     }
@@ -143,9 +141,13 @@ public class OrbitalSandbox extends PApplet {
         if (key == 'i' || key == 'I') showInfo = !showInfo;
         if (key >= '1' && key <= '5') addShape(key - '1');
         if (key == ENTER || key == RETURN) { if (selectedNode != null) { saveState(); selectedNode.isPaused = !selectedNode.isPaused; } }
+
         if (keys[CONTROL]) {
             if ((key == 26 || key == 'z' || key == 'Z') && !undoActioned) { undo(); undoActioned = true; }
             if ((key == 25 || key == 'y' || key == 'Y') && !redoActioned) { redo(); redoActioned = true; }
+            // Ctrl+S (ASCII 19) ve Ctrl+L (ASCII 12) algılama düzeltildi
+            if (key == 19 || (key == 's' || key == 'S') || (keyCode == 'S')) saveScene();
+            if (key == 12 || (key == 'l' || key == 'L') || (keyCode == 'L')) loadScene();
         }
     }
 
@@ -171,14 +173,28 @@ public class OrbitalSandbox extends PApplet {
         return null;
     }
 
+    private void saveScene() {
+        saveStrings("orbital_scene.json", new String[]{gson.toJson(sun)});
+        System.out.println("Scene Saved: orbital_scene.json");
+    }
+
+    private void loadScene() {
+        String[] lines = loadStrings("orbital_scene.json");
+        if (lines != null && lines.length > 0) {
+            sun = gson.fromJson(lines[0], TransformNode.class);
+            selectedNode = sun;
+            System.out.println("Scene Loaded.");
+        }
+    }
+
     private void addShape(int type) {
         String[] names = {"KÜRE", "KUTU", "TETRA", "OCTA", "ICOSA"};
-        TransformNode parent = (selectedNode != null) ? selectedNode : sun;
-        float screenDist = dist(mouseX, mouseY, parent.lastSX, parent.lastSY);
+        TransformNode p = (selectedNode != null) ? selectedNode : sun;
+        float screenDist = dist(mouseX, mouseY, p.lastSX, p.lastSY);
         float worldDistance = screenDist * (abs(panZ) / 550.0f);
         TransformNode newNode = new TransformNode(names[type] + "_" + (int)random(100), worldDistance, 0, 0, color(random(255), random(255), random(255)), 40);
-        newNode.shapeType = type; newNode.orbitAngle = atan2(mouseY - parent.lastSY, mouseX - parent.lastSX);
-        parent.addChild(newNode); selectedNode = newNode;
+        newNode.shapeType = type; newNode.orbitAngle = atan2(mouseY - p.lastSY, mouseX - p.lastSX);
+        p.addChild(newNode); selectedNode = newNode;
     }
 
     public void keyReleased() {
@@ -219,16 +235,14 @@ public class OrbitalSandbox extends PApplet {
         hint(DISABLE_DEPTH_TEST); camera(); noLights();
         fill(5, 7, 15, 245); stroke(0, 255, 255, 200); strokeWeight(2.5f);
         rect(25, height - 70, 140, 40, 10);
-        fill(0, 255, 255); textAlign(CENTER, CENTER); textSize(14);
-        text(showInfo ? "HUD: GİZLE" : "HUD: GÖSTER", 95, height - 50);
+        fill(0, 255, 255); textAlign(CENTER, CENTER); textSize(14); text(showInfo ? "HUD: GİZLE" : "HUD: GÖSTER", 95, height - 50);
         if (!showInfo) { hint(ENABLE_DEPTH_TEST); return; }
 
         textAlign(LEFT, CENTER);
         fill(5, 5, 10, 250); stroke(0, 255, 255, 220); strokeWeight(2.5f);
         rect(25, 25, 360, height - 110, 15);
-        fill(0, 255, 255, 80); noStroke(); rect(25, 25, 360, 75, 15, 15, 0, 0);
-        fill(255); textSize(26); text("ORBITAL EDITOR", 50, 62);
-        fill(255, 255, 0); textSize(11); text("V6.5 PRO EDITION", 265, 62);
+        fill(0, 255, 255, 60); noStroke(); rect(25, 25, 360, 75, 15, 15, 0, 0);
+        fill(255); textSize(26); text("ORBITAL EDITOR", 50, 62); fill(255, 255, 0); textSize(11); text("V6.5 PRO EDITION", 265, 62);
 
         if (selectedNode != null) {
             drawSectionHeader("OBJECT IDENTIFIER", 120);
@@ -266,7 +280,7 @@ public class OrbitalSandbox extends PApplet {
         fill(40, 50, 70, 150); noStroke(); rect(x, y, 280, 8, 4);
         fill(label.equals("GLOBAL") ? (globalPaused ? color(255, 50, 50) : color(0, 200, 255)) : color(255, 200, 0));
         rect(x, y, map(constrain(abs(current), 0, maxVal), 0, maxVal, 0, 280), 8, 4);
-        fill(255); textSize(10); textAlign(LEFT, CENTER); text(label + ": " + String.format("%.3f", current), x, y + 22);
+        fill(255, 200); textSize(10); textAlign(LEFT, CENTER); text(label + ": " + String.format("%.3f", current), x, y + 22);
     }
 
     private void drawCommandOverlay() {
@@ -275,16 +289,8 @@ public class OrbitalSandbox extends PApplet {
         fill(255, 255, 0); textSize(18); textAlign(LEFT, TOP); text("SYSTEM COMMAND REFERENCE", x + 25, y + 25);
         stroke(255, 150); line(x + 25, y + 55, x + w - 25, y + 55);
         fill(255); textSize(14);
-        String cmds = "[SPACE] Pause | [ENTER] Obj Pause\n" +
-                      "[1 - 5] Add Shapes (Sphere, Box, Tetra...)\n" +
-                      "[ARROWS] Move Object | [W / S] Scale\n" +
-                      "[Q / E]  X-Scale     | [U / O] Shear\n" +
-                      "[A / D]  Rotation    | [R] Reset Scene\n" +
-                      "[ [ / ] ] Global Spd | [ , / . ] Obj Spd\n" +
-                      "[Ctrl+Z] Undo Step   | [Ctrl+Y] Redo Step\n" +
-                      "[ i ] HUD Toggle     | [Mouse L] Pan / Select\n" +
-                      "[Mouse R] Rotate Cam | [Wheel] Zoom to Cursor";
-        text(cmds, x + 25, y + 60, w - 50, h - 70);
+        String cmds = "[SPACE] Pause | [ENTER] Obj Pause\n[1-5] Add Shapes | [ARROWS] Move\n[W/S] Scale | [Q/E] X-Scale | [U/O] Shear\n[A/D] Rotation | [R] Reset | [Ctrl+Z/Y] Undo/Redo\n[Ctrl+S/L] Save/Load Scene (JSON)\n[i] HUD Toggle | [Mouse L] Pan | [Mouse R] Rotate Cam";
+        text(cmds, x + 25, y + 70, w - 50, h - 70);
     }
 
     private int countNodes(TransformNode root) { int count = 1; for (TransformNode c : root.children) count += countNodes(c); return count; }
@@ -324,5 +330,7 @@ public class OrbitalSandbox extends PApplet {
         }
     }
 
-    public static void main(String[] args) { PApplet.main("OrbitalSandbox"); }
+    public static void main(String[] args) {
+        PApplet.main("OrbitalSandbox");
+    }
 }
